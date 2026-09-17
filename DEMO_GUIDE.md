@@ -179,7 +179,133 @@ When a DLQ message appears:
 
 > This demo shows reliable Kafka message processing with Avro schemas, Schema Registry, retry handling, running aggregation, manual offset management, and a dead-letter queue.
 
-## 6. Make failures visible
+## 6. Scene-by-scene recording script
+
+### Scene 1: Introduction
+
+**Show:** The GitHub repository and the project files.
+
+**Say:**
+
+> This is a Kafka-based order processing system built with Python. It uses Kafka for messaging, Avro for data serialization, and Confluent Schema Registry for message validation.
+
+> The project includes a producer, consumer, dead-letter queue monitor, Docker Compose configuration, and Avro schemas.
+
+### Scene 2: Docker infrastructure
+
+**Show:** A terminal running `docker compose ps`.
+
+**Say:**
+
+> Docker Compose runs the complete local infrastructure. This includes Zookeeper, Kafka, Schema Registry, and Kafka UI. All four services are currently running successfully.
+
+### Scene 3: Kafka UI
+
+**Show:** <http://localhost:8080>, then the `orders` topic and later the `orders-dlq` topic.
+
+**Say:**
+
+> Kafka UI allows us to inspect the Kafka cluster, topics, messages, and consumer activity through a browser. The main topic is `orders`, and failed messages are sent to `orders-dlq`.
+
+### Scene 4: Consumer
+
+**Show:** Terminal 1 running:
+
+```bash
+.venv/bin/python consumer.py
+```
+
+When `Listening on topic 'orders'...` appears, say:
+
+> This is the consumer. It is subscribed to the `orders` topic and is waiting for order messages. It also maintains a running average price for each product and for all products combined.
+
+### Scene 5: DLQ monitor
+
+**Show:** Terminal 2 running:
+
+```bash
+.venv/bin/python dlq_monitor.py
+```
+
+**Say:**
+
+> This terminal monitors the dead-letter queue. If an order cannot be processed after retries, the consumer sends it to the `orders-dlq` topic, where it can be inspected here.
+
+If the terminal is quiet, say:
+
+> The DLQ monitor is running and waiting for failed messages.
+
+### Scene 6: Producer
+
+**Show:** Terminal 3 running:
+
+```bash
+.venv/bin/python producer.py --count 20 --interval 0.3
+```
+
+**Say:**
+
+> I am now starting the producer and sending 20 simulated orders to Kafka. Each order contains an order ID, product, and price. The messages are serialized using Avro before being published to the `orders` topic.
+
+When a delivery message appears, say:
+
+> Kafka has accepted the order and assigned it to a partition and offset.
+
+When `Done.` appears, say:
+
+> The producer has completed its batch successfully. The producer exiting after sending all messages is expected behavior.
+
+### Scene 7: Aggregation
+
+**Show:** Terminal 1 with an aggregation snapshot.
+
+**Say:**
+
+> The consumer is now processing the orders and calculating running averages. It stores only the total count and total price for each product, so it does not need to store every order.
+
+The exact numbers will be different because the producer generates random orders.
+
+### Scene 8: Retry handling
+
+**Show:** A consumer warning containing `Transient failure` and `Retrying`.
+
+**Say:**
+
+> This order experienced a simulated transient failure. Instead of losing the message, the consumer retries it using exponential backoff. The delay increases between attempts to avoid repeatedly overwhelming a failing service.
+
+### Scene 9: Dead-letter queue
+
+**Show:** Terminal 2 and the `orders-dlq` topic in Kafka UI.
+
+**Say:**
+
+> This message could not be processed successfully, so it was sent to the dead-letter queue. The DLQ record contains the original order details, error information, retry count, source topic, partition, and offset.
+
+> This allows the failed message to be investigated or reprocessed later without blocking the main Kafka pipeline.
+
+If no DLQ message appears, say:
+
+> No messages failed permanently during this run, so the DLQ monitor remains ready but has no output. The failure behavior can be demonstrated by temporarily increasing the failure probabilities in `config.py`.
+
+### Scene 10: Offset commits
+
+**Show:** The consumer code around `enable.auto.commit` and `consumer.commit(msg)`.
+
+**Say:**
+
+> Automatic offset commits are disabled. The consumer commits the Kafka offset only after successful processing or after safely sending the message to the DLQ. This prevents Kafka from marking a message as complete before the system has handled it.
+
+### Scene 11: Closing
+
+**Show:** The three terminals and Kafka UI together.
+
+**Say:**
+
+> This demonstration showed a complete Kafka order processing pipeline with Avro serialization, Schema Registry, running aggregation, retry handling, manual offset commits, and dead-letter queue processing.
+
+> The Docker-based setup makes the entire system easy to run locally and inspect through Kafka UI.
+
+## 7. Make failures visible
 
 Failures are random, so a short run may not show a retry or DLQ message. For a stronger demonstration, temporarily change these values in `config.py`:
 
@@ -203,7 +329,7 @@ PERMANENT_FAILURE_PROBABILITY = 0.05
 
 Do not commit temporary demo-only configuration changes unless they are intended for the project.
 
-## 7. Cleanup after recording
+## 8. Cleanup after recording
 
 Stop the Python processes with `Ctrl+C`. Keep Docker running if you want to inspect Kafka UI afterward. To stop the Docker stack completely, run:
 
