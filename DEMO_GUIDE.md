@@ -56,7 +56,78 @@ Start screen recording after the consumer and DLQ monitor are running.
 9. Show retry warnings and DLQ messages when they occur.
 10. Stop the producer after the batch finishes.
 
-## 4. Presentation script
+## 4. What should appear on screen
+
+### Docker terminal
+
+After `docker compose ps`, each service should show a running status:
+
+```text
+zookeeper          Up
+kafka              Up
+schema-registry   Up
+kafka-ui           Up
+```
+
+The exact spacing and creation times may differ. The important part is that all four services are running.
+
+### Terminal 1: consumer
+
+Before messages arrive, the consumer should show something similar to:
+
+```text
+Listening on topic 'orders'...
+```
+
+After the producer starts, it should show aggregation snapshots similar to:
+
+```text
+Aggregation snapshot:
+Overall running average: 245.37  (n=5)
+	Item1     : avg=210.42  n=2
+	Item3     : avg=280.32  n=1
+```
+
+The numbers and products will be different because orders are randomly generated. You may also see retry warnings such as:
+
+```text
+Transient failure for order 12345678 (attempt 1/3) ... Retrying in 1.0s...
+```
+
+At shutdown, the consumer should display a final report containing `Processed OK` and `Sent to DLQ` counts. Pressing `Ctrl+C` after the demo is complete is normal.
+
+### Terminal 2: DLQ monitor
+
+The DLQ monitor should remain open and wait for failed messages. If a message is sent to the dead-letter queue, it should display information similar to:
+
+```text
+DLQ message received:
+orderId: 12345678
+errorType: PermanentProcessingError
+retryCount: 0
+sourceTopic: orders
+```
+
+If no message fails during the normal run, the monitor may remain quiet. That is expected; increase the failure probabilities temporarily by following Section 6.
+
+### Terminal 3: producer
+
+The producer should show messages similar to:
+
+```text
+Starting producer. Target topic: 'orders'
+Flushing producer, 20 messages sent this run...
+Delivered order -> topic=orders partition=0 offset=0
+Done.
+```
+
+The partition, offsets, and order count may differ. After the configured batch is sent, the producer exits normally with status code `0`. This is expected and confirms that the batch completed.
+
+### Kafka UI
+
+In Kafka UI, show the `orders` topic and, when failures occur, the `orders-dlq` topic. The `orders` topic should contain produced order messages. The DLQ topic should contain failed messages together with their error metadata.
+
+## 5. Presentation script
 
 ### Introduction
 
@@ -108,7 +179,7 @@ When a DLQ message appears:
 
 > This demo shows reliable Kafka message processing with Avro schemas, Schema Registry, retry handling, running aggregation, manual offset management, and a dead-letter queue.
 
-## 5. Make failures visible
+## 6. Make failures visible
 
 Failures are random, so a short run may not show a retry or DLQ message. For a stronger demonstration, temporarily change these values in `config.py`:
 
@@ -132,7 +203,7 @@ PERMANENT_FAILURE_PROBABILITY = 0.05
 
 Do not commit temporary demo-only configuration changes unless they are intended for the project.
 
-## 6. Cleanup after recording
+## 7. Cleanup after recording
 
 Stop the Python processes with `Ctrl+C`. Keep Docker running if you want to inspect Kafka UI afterward. To stop the Docker stack completely, run:
 
