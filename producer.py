@@ -32,17 +32,18 @@ log = logging.getLogger("producer")
 PRODUCTS = ["Item1", "Item2", "Item3", "Item4", "Item5"]
 
 
-def load_schema() -> avro.schema.Schema:
+def load_schema():
     with open("schemas/order.avsc", "r") as f:
         return avro.loads(f.read())
 
 
-def build_producer(value_schema: avro.schema.Schema) -> AvroProducer:
+def build_producer(value_schema) -> AvroProducer:
     return AvroProducer(
         {
             "bootstrap.servers": config.BOOTSTRAP_SERVERS,
             "schema.registry.url": config.SCHEMA_REGISTRY_URL,
         },
+        default_key_schema=avro.loads('"string"'),
         default_value_schema=value_schema,
     )
 

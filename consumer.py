@@ -156,6 +156,7 @@ def build_dlq_producer() -> AvroProducer:
             "bootstrap.servers": config.BOOTSTRAP_SERVERS,
             "schema.registry.url": config.SCHEMA_REGISTRY_URL,
         },
+        default_key_schema=avro.loads('"string"'),
         default_value_schema=dlq_schema,
     )
 
