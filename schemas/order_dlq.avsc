@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "name": "OrderDLQ",
+  "namespace": "com.bigdata.assignment",
+  "doc": "Envelope wrapping a permanently failed order message together with failure metadata, for the Dead Letter Queue.",
+  "fields": [
+    { "name": "orderId",       "type": ["null", "string"], "default": null, "doc": "Order id, if it could be recovered from the payload." },
+    { "name": "product",      "type": ["null", "string"], "default": null },
+    { "name": "price",        "type": ["null", "float"],  "default": null },
+    { "name": "rawPayload",   "type": "string", "doc": "Original message payload as a string, for forensic inspection." },
+    { "name": "errorMessage", "type": "string", "doc": "Exception message describing why processing permanently failed." },
+    { "name": "errorType",    "type": "string", "doc": "Exception class name." },
+    { "name": "retryCount",   "type": "int", "doc": "Number of retry attempts made before giving up." },
+    { "name": "failedAtEpochMs", "type": "long", "doc": "Epoch millis when the message was sent to the DLQ." },
+    { "name": "sourceTopic",  "type": "string", "doc": "Topic the original message came from." },
+    { "name": "sourcePartition", "type": "int" },
+    { "name": "sourceOffset", "type": "long" }
+  ]
+}
